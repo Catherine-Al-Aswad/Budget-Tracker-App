@@ -23,7 +23,7 @@ library(data.tree)
 library(htmlwidgets)
 
 
-setwd("C:/Users/cathe/OneDrive/Documents/Personal/Formal/Budget/")
+setwd("path to the excel sheet containg your data")
 
 #### OG data reading
 # data <- read_excel("Budget_OG.xlsx", sheet = 1) %>% clean_names() %>%
