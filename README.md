@@ -8,6 +8,6 @@ Creator: Catherine Al Aswad
 
 Created date: October - November 2022
 
-'Budget Tracker app' is the RShiny code file. Note that there are some fine details that need tunning and things I want to add, but otherwise it is very functional.
+'Budget Tracker app' is the RShiny code file. Note that there are some fine details that need tunning and things I want to add, but otherwise it is very functional. Any commented out sections are not necessary for the app to run; I kept those there as part of my testing and debugging process.
 
 'Budget - record template' excel file has the headers that the R file reads in, so that the code can run. Actual data is excluded, since I use data from my personal spending.
