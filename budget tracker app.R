@@ -7,12 +7,13 @@ library(janitor) #clean_names
 library(here) # here() for file path
 library(ggplot2) # ggplot
 library(plotly)  #interactive graphs
-library(lubridate) # date formating
+library(lubridate) # date formatting
 library(RColorBrewer)  # brewer color palette
 library(shinyWidgets)  # for calendar widget
 library(writexl)  # write to excel
 library(vroom)   # write to excel
 library(openxlsx)    # write to excel
+library(DT)
 
 # # bubble graph libraries
 # devtools::install_github("jeromefroe/circlepackeR")
@@ -23,7 +24,7 @@ library(data.tree)
 library(htmlwidgets)
 
 
-setwd("path to the excel sheet containg your data")
+setwd("C:/Users/cathe/OneDrive/Documents/Personal/Formal/Budget/")
 
 #### OG data reading
 # data <- read_excel("Budget_OG.xlsx", sheet = 1) %>% clean_names() %>%
@@ -70,8 +71,6 @@ budget_data <- read_excel("Budget.xlsx", sheet = 2) %>% clean_names() %>%
 
 
 
-
-
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   
@@ -80,35 +79,42 @@ ui <- fluidPage(
       tabPanel("Monthly Summary", 
                fluidRow(
                  column(width = 3, 
-                        fluidRow(style = "height:300px",
+                        fluidRow(style = "height:40vh",
                                  wellPanel( titlePanel("Monthly Budget Tracking"),
                                             selectInput(inputId = "year", 
                                                         label = "Choose a Year", 
-                                                        choices = unique(data$year_cde)),
+                                                        choices = sort(unique(data$year_cde), decreasing = TRUE)),
                                             
                                             selectInput(inputId = "category", 
                                                         label = "Choose a Category", 
                                                         choices = sort(unique(data$overall_category)))
                                             ),
-                                 width = 3)),
+                                 width = "30%")),
                  column(width = 3,
-                        fluidRow(style = "height:300px",
+                        fluidRow(style = "height:40vh",
                                  plotlyOutput("monthlytotals",
-                                              width = 500,
-                                              height = 300),
-                                 height = div(style = "height:300px;")))),
+                                              width = "450%",
+                                              height = "100%")),
+                        
+                        
+                        fluidRow(style = "height:40vh",
+                                 plotlyOutput("monthlytotals_ctgry",
+                                              width = "450%",
+                                              height = "100%"))
+                        )),
                  fluidRow(
                    column(width=12,
-                        fluidRow(style = "height:1000px",
+                        fluidRow(style = "height:100vh",
                                  plotlyOutput("monthlyplot",
-                                              width = 1900,
-                                              height = 800),
-                                 height = div(style = "height:1000px;")),
-                        fluidRow(style = "height:1500px",
+                                              width = "150%",
+                                              height = "100%")),
+                        
+                        
+            
+                        fluidRow(style = "height:100vh",
                                  plotlyOutput("monthlybreakdown",
-                                              width = 1900,
-                                              height = 2000),
-                                 height = div(style = "height:1500px;"))
+                                              width = "150%",
+                                              height = "100%"))
                         )
                  )
                ),
@@ -116,7 +122,7 @@ ui <- fluidPage(
     tabPanel("Yearly Summary",
              fluidRow(
                column(width = 3, 
-                      fluidRow(style = "height:300px",
+                      fluidRow(style = "height:40vh",
                                wellPanel( titlePanel("Yearly Budget Tracking"),
                                           selectInput(inputId = "categoryYear", 
                                                       label = "Choose a Category", 
@@ -124,16 +130,18 @@ ui <- fluidPage(
                                           ),
                                width = 3)),
                column(width=12,
-                      fluidRow(style = "height:1000px",
+                      fluidRow(style = "height:85vh",
                                plotlyOutput("yearlyplot",
-                                            width = 1700,
-                                            height = 800),
-                               height = div(style = "height:1000px;")),
-                      fluidRow(style = "height:1000px",
+                                            width = "150%",
+                                            height = "100%")),
+                      fluidRow(style = "height:90vh",
                                plotlyOutput("yearlyplotttl",
-                                            width = 1900,
-                                            height = 800),
-                               height = div(style = "height:1000px;"))
+                                            width = "150%",
+                                            height = "100%")),
+                      fluidRow(style = "height:90vh",
+                               plotlyOutput("yearlyplot_ovrl_ttl",
+                                            width = "150%",
+                                            height = "100%"))
                       )
                )
              ),
@@ -141,11 +149,11 @@ ui <- fluidPage(
     tabPanel("Item Breakdwon", 
              fluidRow(
                column(width = 3, 
-                      fluidRow(style = "height:300px",
+                      fluidRow(style = "height:35vh",
                                wellPanel( titlePanel("Yearly Item Budget Tracking"),
                                           selectInput(inputId = "itmyear", 
                                                       label = "Choose a Year", 
-                                                      choices = unique(data$year_cde)),
+                                                      choices = sort(unique(data$year_cde), decreasing = TRUE)),
                                           
                                           selectInput(inputId = "itmcategory", 
                                                       label = "Choose a Category", 
@@ -153,24 +161,53 @@ ui <- fluidPage(
                                ),
                                width = 3)),
                column(width=12,
-                      fluidRow(style = "height:1500px",
+                      fluidRow(style = "height:100vh",
                                circlepackeROutput("itmplt",
-                                            width = 1500,
-                                            height = 1500),
-                               height = div(style = "height:1500px;")),
-                      fluidRow(style = "height:1500px",
+                                            width = "150%",
+                                            height = "100%")),
+                      fluidRow(style = "height:100vh",
                                circlepackeROutput("itmplt2",
-                                                  width = 1500,
-                                                  height = 1500),
-                               height = div(style = "height:1500px;"))
+                                                  width = "150%",
+                                                  height = "100%"))
                )
                )
              ),
+    tabPanel("Raw Data",
+             fluidRow(
+               column(width = 3, 
+                      fluidRow(style = "height:100vh",
+                               wellPanel( titlePanel("Filter By"),
+                                          
+                                          checkboxInput(inputId = "show_all", 
+                                                        label = "Start Filtering", 
+                                                        value = FALSE),
+                                          conditionalPanel("input.show_all == 1",
+                                                           selectInput(inputId = "categoryinpt_old_ovrl",
+                                                                       label = "Overall Category",
+                                                                       choices = sort(unique(data$overall_category)))),
+                                          conditionalPanel("input.show_all == 1",
+                                                           selectInput(inputId = "itmcategoryinpt_old_ovrl", 
+                                                                       label = "Item Category", 
+                                                                       choices = sort(unique(data$item_category)))),
+                                          conditionalPanel("input.show_all == 1",
+                                                           selectInput(inputId = "itmdescinpt_old_ovrl",
+                                                                       label = "Item Description",
+                                                                       choices = sort(unique(data$item_description))))
+                               ),
+                               width = 3)),
+               column(width = 5,
+                      fluidRow(
+                        DT::dataTableOutput('alltable')),
+                      
+                      fluidRow(
+                        DT::dataTableOutput('all_summary')))
+             )
+    ),
     
     tabPanel("Input Data",
              fluidRow(
                column(width = 3, 
-                      fluidRow(style = "height:300px",
+                      fluidRow(style = "height:100vh",
                                wellPanel( titlePanel("Input Data"),
                                           airDatepickerInput(inputId = "itmdteinpt",
                                                              label = "Select a date",
@@ -226,7 +263,7 @@ ui <- fluidPage(
                                           radioButtons(inputId = "cost_dscnt", 
                                                       label = "Cost Discount Type", 
                                                       choices = list("Amount" = 1, 
-                                                                     "Percent/Ratio" = 2,
+                                                                     "Ratio" = 2,
                                                                      "None" = 3),
                                                       selected = 3,
                                                       inline = TRUE),
@@ -237,16 +274,16 @@ ui <- fluidPage(
                                                                         value = 0)),
                                           
                                           sliderInput(inputId = "tax_percnt", 
-                                                      label = "Percent Tax", 
+                                                      label = "Percent Tax (Ratio)", 
                                                       min = 0,
                                                       max = 1,
                                                       value = 0,
-                                                      step = 0.05),
+                                                      step = 0.01),
                                           
                                           radioButtons(inputId = "tipOfTotal", 
                                                        label = "Tip Type", 
                                                        choices = list("Amount" = 1, 
-                                                                      "Percent/Ratio" = 2,
+                                                                      "Ratio" = 2,
                                                                       "None" = 3),
                                                        selected = 3,
                                                        inline = TRUE),
@@ -259,7 +296,7 @@ ui <- fluidPage(
                                           radioButtons(inputId = "total_dscnt", 
                                                        label = "Discount Type of Total", 
                                                        choices = list("Amount" = 1, 
-                                                                      "Percent/Ratio" = 2,
+                                                                      "Ratio" = 2,
                                                                       "None" = 3),
                                                        selected = 3,
                                                        inline = TRUE),
@@ -299,7 +336,24 @@ ui <- fluidPage(
                         downloadButton("downloadData", "Done"))
                         
                         )
-             ))
+             )),
+    tabPanel("General Info",
+             fluidRow(
+               column(width = 4, style = "background-color:#f5c6cd;",
+                      tags$b(tags$span(style="color:Black; font-size:16px; font-family:'Papyrus' ", "Receipt Rules!")),
+                      p(style="text-align: justify;", "Don't keep receipts unless they are:"),
+                      p(style="text-align: justify;", strong("1)"), " for items you may return"),
+                      p(style="text-align: justify;", strong("2)"), " insurance covered or related"),
+                      p(style="text-align: justify;", strong("3)"), " big bills"),
+                      p(style="text-align: justify;", strong("4)"), " investments related")
+                      ),
+               column(width = 4, style = "background-color:#aefb8a;",
+                      tags$b(tags$span(style="color:Black; font-size:16px; font-family:'Papyrus' ", "Driving Money Reminders!")),
+                      p(style="text-align: justify;", "Check driving papers in physical folder for:"),
+                      p(style="text-align: justify;", strong("1)"), " Driving rules"),
+                      p(style="text-align: justify;", strong("2)"), " Insurance certificate to reduce insurance cost")
+               )
+               ))
     )
     )
   )
@@ -353,6 +407,44 @@ server <- function(input, output, session) {
     )
   })
   
+  output$monthlytotals_ctgry <- renderPlotly({
+    
+    # bar data
+    data_filtered = data %>% filter(year_cde == input$year)
+    
+    
+    # monthly category totals
+    data_filtered_ttl = data_filtered %>% 
+      group_by(month_nme,overall_category) %>%
+      summarize(cost_ttl = sum(monthly_cost))
+    
+    # get colors
+    colourCount = length(unique(data_filtered_ttl$overall_category))
+    getPalette = colorRampPalette(brewer.pal(12, "Paired"))
+    
+    
+    ggplotly(
+      ggplot(data_filtered_ttl, 
+             mapping = aes(x=month_nme, 
+                           y=cost_ttl, 
+                           group = 1,
+                           color = overall_category,
+                           shape = overall_category)) +
+        geom_line()+
+        geom_point()+
+        scale_y_continuous("Total Monthly Cost", 
+                           labels = scales::dollar,
+                           breaks = scales::pretty_breaks(n=15)) +
+        scale_x_discrete("Month", limits = unique(data_filtered$month_nme)) +
+        labs(title = "Total Monthly Spending by Category, After Tax") +
+        theme_bw() +
+        theme(plot.title = element_text(size = 14, face="bold", hjust = 0.5)) +
+        scale_color_manual(values = getPalette(colourCount))
+      
+      
+    )
+  })
+  
   output$monthlyplot <- renderPlotly({
       
       # bar data
@@ -394,11 +486,11 @@ server <- function(input, output, session) {
                              labels = scales::dollar,
                              breaks = scales::pretty_breaks(n=15)) +
           scale_x_discrete("Month", limits = unique(data_filtered$month_nme)) +
-          geom_line(budget_data_filtered, 
-                    mapping = aes(x=month, y=budget, group = 1), 
+          geom_line(budget_data_filtered,
+                    mapping = aes(x=month, y=budget, group = 1),
                     color = "red")+
-          geom_point(budget_data_filtered, 
-                    mapping = aes(x=month, y=budget, group = 1), 
+          geom_point(budget_data_filtered,
+                    mapping = aes(x=month, y=budget, group = 1),
                     color = "red")+
           geom_point(data_filtered_ttl, 
                      mapping = aes(x=month_nme, y=cost_ttl, group = 1), 
@@ -465,8 +557,8 @@ server <- function(input, output, session) {
                      shape = 23)+
           labs(title = "Monthly Spending by Item Category, After Tax") +
           theme_bw() +
-          theme(plot.title = element_text(size = 14, face="bold", hjust = 0.5)) +
-          facet_wrap(~item_category, scales = "free_y", ncol=1)  +
+          theme(plot.title = element_text(size = 14, face="bold", hjust = 0.5), axis.text.x = element_text(angle = 90, size=8)) +
+          facet_grid(~item_category, scales = "free_y")  +
           scale_fill_manual(values = getPalette(colourCount))
         
       )
@@ -562,7 +654,53 @@ server <- function(input, output, session) {
       )
       
     })   
+ 
+  
+  output$yearlyplot_ovrl_ttl <- renderPlotly({
     
+    # yearly totals
+    data_filtered_ttl = data %>% 
+      group_by(year_cde) %>%
+      summarize(cost_ttl = sum(monthly_cost))
+
+    # summary lines data
+    data_filtered_avg = data %>% 
+      group_by(year_cde) %>%
+      summarize(cost_ttl = sum(monthly_cost)) %>%
+      ungroup() %>%
+      summarize(cost_mean = mean(cost_ttl),
+                cost_median = median(cost_ttl))
+    
+    ggplotly(
+      ggplot()+
+        geom_line(data_filtered_ttl, 
+                  mapping = aes(x = year_cde, y = cost_ttl, group = 1), 
+                  color = "gold") +
+        geom_point(data_filtered_ttl, 
+                   mapping = aes(x = year_cde, y = cost_ttl, group = 1), 
+                   color = "gold",
+                   shape = 23)+
+        geom_hline(data_filtered_avg, 
+                   mapping = aes(yintercept = cost_mean),
+                   color = "blue") +
+        geom_hline(data_filtered_avg, 
+                   mapping = aes(yintercept = cost_median),
+                   color = "green") +
+        scale_y_continuous("Yearly Cost", 
+                           labels = scales::dollar,
+                           breaks = scales::pretty_breaks(n=25)) +
+        scale_x_discrete("Year",limits = unique(data_filtered_ttl$year_cde)) +
+        labs(title = "Yearly Overall Total Spending, After Tax") +
+        theme_bw() +
+        theme(plot.title = element_text(size = 14, face="bold", hjust = 0.5))
+    )
+    
+    
+  })     
+  
+  
+  
+  
     
   output$itmplt <- renderCirclepackeR({
       
@@ -636,7 +774,7 @@ server <- function(input, output, session) {
   
   table_all <- reactiveVal(data[0,])
   check_table <- reactiveVal(data[0,])
-  
+
   observeEvent(input$itemtable_add, {
     overall_category_i = " "
     if(input$categoryinpt == FALSE) {overall_category_i = input$categoryinpt_old}
@@ -707,6 +845,7 @@ server <- function(input, output, session) {
     df <- check_table()
     df <- df[-input$remove_row,]
     check_table(df)
+    
   })
   
   observeEvent(input$approve_check, {
@@ -721,7 +860,7 @@ server <- function(input, output, session) {
   })
   
   output$checktable <- renderDataTable(check_table())
-  
+
   
   
   output$checktotaltable = renderDataTable({
@@ -744,7 +883,65 @@ server <- function(input, output, session) {
       
       })
   
-   
+
+  all_data = data %>% select(overall_category, item_category, item_description, monthly_cost, comments, day_cde, month_nme, year_cde)
+  temp_data = all_data
+  
+  observeEvent(input$categoryinpt_old_ovrl, {
+    
+    temp_data_1 = all_data %>% filter(overall_category == input$categoryinpt_old_ovrl)
+    
+    updateSelectizeInput(session, "itmcategoryinpt_old_ovrl", choices = sort(unique(temp_data_1$item_category)))
+    updateSelectizeInput(session, "itmdescinpt_old_ovrl", choices = sort(unique(temp_data_1$item_description)))
+    
+  })
+  
+  observeEvent(input$itmcategoryinpt_old_ovrl, {
+    
+    temp_data_2 = all_data %>% filter(overall_category == input$categoryinpt_old_ovrl,
+                                    item_category == input$itmcategoryinpt_old_ovrl)
+    
+    updateSelectizeInput(session, "itmdescinpt_old_ovrl", choices = sort(unique(temp_data_2$item_description)))
+    
+  })
+  
+
+  output$alltable <- DT::renderDataTable(
+    
+    if(input$show_all == FALSE ) {temp_data = all_data
+                                  temp_data}
+    else {temp_data = temp_data %>% filter(overall_category == input$categoryinpt_old_ovrl,
+                                           item_category == input$itmcategoryinpt_old_ovrl,
+                                           item_description == input$itmdescinpt_old_ovrl)
+          temp_data
+        }
+                                         )
+  
+  
+  
+  
+  output$all_summary <- DT::renderDataTable(
+    
+    
+    if(input$show_all == FALSE ) {temp_data = all_data %>%
+                                              group_by(year_cde) %>%
+                                              summarize(yrly_ttl = round(sum(monthly_cost),2),
+                                                        item_mean = round(mean(monthly_cost),2),
+                                                        item_median = round(median(monthly_cost),2))
+                                  temp_data}
+    else {temp_data = temp_data %>% filter(overall_category == input$categoryinpt_old_ovrl,
+                                           item_category == input$itmcategoryinpt_old_ovrl,
+                                           item_description == input$itmdescinpt_old_ovrl) %>%
+                                    group_by(year_cde) %>%
+                                    summarize(yrly_ttl = round(sum(monthly_cost),2),
+                                              item_mean = round(mean(monthly_cost),2),
+                                              item_median = round(median(monthly_cost),2))
+    temp_data
+    }
+  )
+
+
+  
     
 }
 
