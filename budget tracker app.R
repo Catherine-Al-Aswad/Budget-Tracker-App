@@ -24,6 +24,11 @@ library(data.tree)
 library(htmlwidgets)
 
 
+## pretty tables libraries
+library(formattable)
+library(knitr) # lets me add a title to formattable
+
+
 setwd("C:/Users/cathe/OneDrive/Documents/Personal/Formal/Budget/")
 
 #### OG data reading
@@ -123,12 +128,14 @@ ui <- fluidPage(
              fluidRow(
                column(width = 3, 
                       fluidRow(style = "height:40vh",
-                               wellPanel( titlePanel("Yearly Budget Tracking"),
-                                          selectInput(inputId = "categoryYear", 
-                                                      label = "Choose a Category", 
-                                                      choices = sort(unique(data$overall_category)))
+                               wellPanel( titlePanel("Yearly Budget Tracking")
                                           ),
                                width = 3)),
+               column(width = 3, 
+                      fluidRow(style = "height:40vh",
+                               plotlyOutput("yearlyplot_ovrl_ttl",
+                                            width = "450%",
+                                            height = "100%"))),
                column(width=12,
                       fluidRow(style = "height:85vh",
                                plotlyOutput("yearlyplot",
@@ -137,11 +144,8 @@ ui <- fluidPage(
                       fluidRow(style = "height:90vh",
                                plotlyOutput("yearlyplotttl",
                                             width = "150%",
-                                            height = "100%")),
-                      fluidRow(style = "height:90vh",
-                               plotlyOutput("yearlyplot_ovrl_ttl",
-                                            width = "150%",
                                             height = "100%"))
+                      
                       )
                )
              ),
@@ -196,18 +200,23 @@ ui <- fluidPage(
                                ),
                                width = 3)),
                column(width = 5,
-                      fluidRow(
-                        DT::dataTableOutput('alltable')),
+                      fluidRow(DT::dataTableOutput('alltable')),
                       
-                      fluidRow(
-                        DT::dataTableOutput('all_summary')))
+                      fluidRow(formattableOutput('all_summary')),
+                      fluidRow(formattableOutput('monthly_ttl_cnt_per_year')),
+                      
+                      fluidRow(DT::dataTableOutput('overall_category_cnt_per_year')),
+                      fluidRow(DT::dataTableOutput('item_cnt_per_year'))
+                      
+                      )
              )
     ),
     
     tabPanel("Input Data",
              fluidRow(
+               fluidRow(
                column(width = 3, 
-                      fluidRow(style = "height:100vh",
+                      fluidRow(style = "height:45vh",
                                wellPanel( titlePanel("Input Data"),
                                           airDatepickerInput(inputId = "itmdteinpt",
                                                              label = "Select a date",
@@ -225,9 +234,10 @@ ui <- fluidPage(
                                           conditionalPanel("input.categoryinpt == 0",
                                                            selectInput(inputId = "categoryinpt_old",
                                                                        label = "Choose an Overall Category",
-                                                                       choices = sort(unique(data$overall_category)))),
-                                        
-                                        
+                                                                       choices = sort(unique(data$overall_category))))),
+                               width = 3)),
+               column(width = 3, 
+                      wellPanel(                
                                           checkboxInput(inputId = "itmcategoryinpt", 
                                                         label = "New Item Category?", 
                                                         value = FALSE),
@@ -256,86 +266,94 @@ ui <- fluidPage(
                                                                        label = "Choose an Item Description",
                                                                        choices = sort(unique(data$item_description)))),
                                           
-                                          numericInput(inputId = "cost_inpt", 
-                                                    label = "Original Cost", 
-                                                    value = 0),
-                                          
-                                          radioButtons(inputId = "cost_dscnt", 
-                                                      label = "Cost Discount Type", 
-                                                      choices = list("Amount" = 1, 
-                                                                     "Ratio" = 2,
-                                                                     "None" = 3),
-                                                      selected = 3,
-                                                      inline = TRUE),
-                                          
-                                          conditionalPanel("input.cost_dscnt < 3",
-                                                           numericInput(inputId = "cost_dscnt_yes",
-                                                                        label = "Enter Cost Discount",
-                                                                        value = 0)),
-                                          
-                                          sliderInput(inputId = "tax_percnt", 
-                                                      label = "Percent Tax (Ratio)", 
-                                                      min = 0,
-                                                      max = 1,
-                                                      value = 0,
-                                                      step = 0.01),
-                                          
-                                          radioButtons(inputId = "tipOfTotal", 
-                                                       label = "Tip Type", 
-                                                       choices = list("Amount" = 1, 
-                                                                      "Ratio" = 2,
-                                                                      "None" = 3),
-                                                       selected = 3,
-                                                       inline = TRUE),
-                                          
-                                          conditionalPanel("input.tipOfTotal < 3",
-                                                           numericInput(inputId = "tipOfTotal_yes",
-                                                                        label = "Enter Tip", 
-                                                                        value = 0)),
-                                          
-                                          radioButtons(inputId = "total_dscnt", 
-                                                       label = "Discount Type of Total", 
-                                                       choices = list("Amount" = 1, 
-                                                                      "Ratio" = 2,
-                                                                      "None" = 3),
-                                                       selected = 3,
-                                                       inline = TRUE),
-                                          
-                                          conditionalPanel("input.total_dscnt < 3",
-                                                           numericInput(inputId = "total_dscnt_yes", 
-                                                                        label = "Enter Discount of Total", 
-                                                                        value = 0)),
-                                          
-                                          numericInput(inputId = "additional_fees", 
-                                                    label = "Enter any additional fees", 
-                                                    value = 0),
-                                          
-                                          textInput(inputId = "comment_inpt", 
-                                                    label = "Comments:", 
-                                                    value = ""),
                                           
                                           actionButton("itemtable_add", "Add Item")
                                       
                                           
-                               ),
-                               width = 3)),
+                               )),
+               column(width = 3, 
+                      wellPanel(
+                      numericInput(inputId = "cost_inpt", 
+                                   label = "Original Cost", 
+                                   value = 0),
+                      
+                      radioButtons(inputId = "cost_dscnt", 
+                                   label = "Cost Discount Type", 
+                                   choices = list("Amount" = 1, 
+                                                  "Ratio" = 2,
+                                                  "None" = 3),
+                                   selected = 3,
+                                   inline = TRUE),
+                      
+                      conditionalPanel("input.cost_dscnt < 3",
+                                       numericInput(inputId = "cost_dscnt_yes",
+                                                    label = "Enter Cost Discount",
+                                                    value = 0)),
+                      
+                      sliderInput(inputId = "tax_percnt", 
+                                  label = "Percent Tax (Ratio)", 
+                                  min = 0,
+                                  max = 1,
+                                  value = 0,
+                                  step = 0.01))),
+               
+               column(width = 3, 
+                      wellPanel(
+                      radioButtons(inputId = "tipOfTotal", 
+                                   label = "Tip Type", 
+                                   choices = list("Amount" = 1, 
+                                                  "Ratio" = 2,
+                                                  "None" = 3),
+                                   selected = 3,
+                                   inline = TRUE),
+                      
+                      conditionalPanel("input.tipOfTotal < 3",
+                                       numericInput(inputId = "tipOfTotal_yes",
+                                                    label = "Enter Tip", 
+                                                    value = 0)),
+                      
+                      radioButtons(inputId = "total_dscnt", 
+                                   label = "Discount Type of Total", 
+                                   choices = list("Amount" = 1, 
+                                                  "Ratio" = 2,
+                                                  "None" = 3),
+                                   selected = 3,
+                                   inline = TRUE),
+                      
+                      conditionalPanel("input.total_dscnt < 3",
+                                       numericInput(inputId = "total_dscnt_yes", 
+                                                    label = "Enter Discount of Total", 
+                                                    value = 0)),
+                      
+                      numericInput(inputId = "additional_fees", 
+                                   label = "Enter any additional fees", 
+                                   value = 0),
+                      
+                      textInput(inputId = "comment_inpt", 
+                                label = "Comments:", 
+                                value = ""))
+               )),
+               
+               fluidRow(
                column(width=5,
-                      fluidRow(
-                        dataTableOutput('checktable')),
                       
                       fluidRow(
-                        dataTableOutput('checktotaltable')),
+                        formattableOutput('checktotaltable')),
+                      
+                      fluidRow(
+                        actionButton("approve_check", "Approve Check"),
+                        downloadButton("downloadData", "Done")),
                       
                       fluidRow(
                         numericInput(inputId = "remove_row", 
                                      label = "Remove Row",
                                      value = 0),
                         actionButton("remove_row_okay", "Delete Row")),
+                      
                       fluidRow(
-                        actionButton("approve_check", "Approve Check"),
-                        downloadButton("downloadData", "Done"))
+                        dataTableOutput('checktable'))
                         
-                        )
+                        ))
              )),
     tabPanel("General Info",
              fluidRow(
@@ -399,7 +417,7 @@ server <- function(input, output, session) {
         scale_y_continuous("Total Monthly Cost", 
                            labels = scales::dollar,
                            breaks = scales::pretty_breaks(n=15)) +
-        scale_x_discrete("Month", limits = unique(data_filtered$month_nme)) +
+        scale_x_discrete("Month", limits = c("January","February","March", "April", "May" , "June", "July", "August", "September", "October", "November", "December")) + #unique(data_filtered$month_nme)) +
         labs(title = "Total Monthly Spending, After Tax") +
         theme_bw() +
         theme(plot.title = element_text(size = 14, face="bold", hjust = 0.5))
@@ -435,7 +453,7 @@ server <- function(input, output, session) {
         scale_y_continuous("Total Monthly Cost", 
                            labels = scales::dollar,
                            breaks = scales::pretty_breaks(n=15)) +
-        scale_x_discrete("Month", limits = unique(data_filtered$month_nme)) +
+        scale_x_discrete("Month", limits = c("January","February","March", "April", "May" , "June", "July", "August", "September", "October", "November", "December"))  + #unique(data_filtered$month_nme)) +
         labs(title = "Total Monthly Spending by Category, After Tax") +
         theme_bw() +
         theme(plot.title = element_text(size = 14, face="bold", hjust = 0.5)) +
@@ -485,7 +503,7 @@ server <- function(input, output, session) {
           scale_y_continuous("Monthly Cost", 
                              labels = scales::dollar,
                              breaks = scales::pretty_breaks(n=15)) +
-          scale_x_discrete("Month", limits = unique(data_filtered$month_nme)) +
+          scale_x_discrete("Month", limits = c("January","February","March", "April", "May" , "June", "July", "August", "September", "October", "November", "December")) + # unique(data_filtered$month_nme)) +
           geom_line(budget_data_filtered,
                     mapping = aes(x=month, y=budget, group = 1),
                     color = "red")+
@@ -544,7 +562,7 @@ server <- function(input, output, session) {
           scale_y_continuous("Monthly Cost", 
                              labels = scales::dollar,
                              breaks = scales::pretty_breaks(n=4)) +
-          scale_x_discrete("Month", limits = unique(data_filtered$month_nme)) +
+          scale_x_discrete("Month", limits = c("January","February","March", "April", "May" , "June", "July", "August", "September", "October", "November", "December")) + # unique(data_filtered$month_nme)) +
           geom_hline(data_filtered_avg, 
                      mapping = aes(yintercept = cost_mean),
                      color = "blue") +
@@ -568,50 +586,36 @@ server <- function(input, output, session) {
     
     
   output$yearlyplot <- renderPlotly({
-      
-      # line graph data
-      data_filtered = data %>% filter(overall_category == input$categoryYear)
+    
+
       
       # summary lines data
-      data_filtered_avg = data_filtered %>% 
-        group_by(year_cde, month_nme) %>%
+      data_filtered_avg = data %>% 
+        group_by(year_cde, month_nme, overall_category) %>%
         summarize(cost_ttl = sum(monthly_cost)) %>%
         ungroup() %>%
-        group_by(year_cde) %>%
+        group_by(year_cde, overall_category) %>%
         summarize(cost_mean = mean(cost_ttl),
                   cost_median = median(cost_ttl))
       
-      # budget data
-      budget_data_filtered = budget_data %>%
-        filter(overall_category == input$categoryYear) %>%
-        group_by(year) %>%
-        summarize(avrg_budget = mean(budget))
-
         
       # get colors
-      colourCount = length(unique(data_filtered$overall_category))
+      colourCount = length(unique(data_filtered_avg$overall_category))
       getPalette = colorRampPalette(brewer.pal(12, "Paired"))
       
       ggplotly(
-        ggplot() +
+        ggplot(mapping = aes(x = year_cde,
+                             color = overall_category)) +
           geom_line(data_filtered_avg, 
-                     mapping = aes(x = year_cde, y = cost_mean),
-                     color = "blue") +
+                    mapping = aes(y = cost_mean),
+                    linetype = "dashed") +
           geom_point(data_filtered_avg, 
-                     mapping = aes(x = year_cde, y = cost_mean, group = 1), 
-                     color = "blue")+
+                     mapping = aes(y = cost_mean),
+                     shape = 17)+
           geom_line(data_filtered_avg, 
-                     mapping = aes(x = year_cde, y = cost_median),
-                     color = "green") +
+                     mapping = aes(y = cost_median)) +
           geom_point(data_filtered_avg, 
-                     mapping = aes(x = year_cde, y = cost_median, group = 1), 
-                     color = "green")+
-          geom_line(budget_data_filtered,
-                    mapping = aes(x=year, y=avrg_budget),
-                    color = "red") +
-          geom_point(budget_data_filtered,
-                     mapping = aes(x=year, y=avrg_budget, group = 1),
-                     color = "red")+
+                     mapping = aes(y = cost_median))+
           scale_y_continuous("Yearly Cost", 
                              labels = scales::dollar,
                              breaks = scales::pretty_breaks(n=25)) +
@@ -619,7 +623,10 @@ server <- function(input, output, session) {
           labs(title = "Monthly Spending per Year, After Tax") +
           theme_bw() +
           theme(plot.title = element_text(size = 14, face="bold", hjust = 0.5)) +
-          scale_fill_manual(values = getPalette(colourCount))
+          facet_grid(~overall_category, scales = "free_y")  +
+          scale_color_manual(values = getPalette(colourCount))
+        
+    
         )
       
     })
@@ -863,11 +870,11 @@ server <- function(input, output, session) {
 
   
   
-  output$checktotaltable = renderDataTable({
+  output$checktotaltable = renderFormattable({
 
-    check_table() %>%
+    formattable(check_table() %>%
       summarize(FirstCost = sum(cost),
-                FinalCost = sum(monthly_cost))
+                FinalCost = sum(monthly_cost)))
     
   })
   
@@ -920,27 +927,71 @@ server <- function(input, output, session) {
   
   
   
-  output$all_summary <- DT::renderDataTable(
+  output$all_summary <- renderFormattable(
     
     
-    if(input$show_all == FALSE ) {temp_data = all_data %>%
-                                              group_by(year_cde) %>%
-                                              summarize(yrly_ttl = round(sum(monthly_cost),2),
-                                                        item_mean = round(mean(monthly_cost),2),
-                                                        item_median = round(median(monthly_cost),2))
-                                  temp_data}
-    else {temp_data = temp_data %>% filter(overall_category == input$categoryinpt_old_ovrl,
-                                           item_category == input$itmcategoryinpt_old_ovrl,
-                                           item_description == input$itmdescinpt_old_ovrl) %>%
-                                    group_by(year_cde) %>%
-                                    summarize(yrly_ttl = round(sum(monthly_cost),2),
-                                              item_mean = round(mean(monthly_cost),2),
-                                              item_median = round(median(monthly_cost),2))
-    temp_data
-    }
+    formattable((all_data %>%
+                group_by(year_cde) %>%
+                summarize(yrly_ttl = round(sum(monthly_cost),2),
+                          item_mean = round(mean(monthly_cost),2),
+                          item_median = round(median(monthly_cost),2))), 
+              caption = "Total, Mean, Median cost of all items per year:",
+              list( `item_mean` = color_tile("red", "white"),
+                    `item_median` = color_tile("orange", "white"),
+                    `yrly_ttl` = color_tile("maroon", "white")))
+                
+  )
+  
+  
+  
+  output$monthly_ttl_cnt_per_year <- renderFormattable(
+    
+    formattable((all_data %>% 
+                   group_by(year_cde, month_nme) %>%
+                   summarize(cost_ttl = sum(monthly_cost)) %>%
+                   ungroup() %>%
+                   group_by(year_cde) %>%
+                   summarize(cost_median = median(cost_ttl)) 
+                 #pivot_wider(names_from="year_cde", values_from = "cost_median")
+    ),
+    caption = 'Median cost of all monthly spending per year',
+    list(`cost_median` = color_tile("maroon", "white")))
+    
+  )
+  
+  
+  
+  output$overall_category_cnt_per_year <- DT::renderDataTable(
+    
+    datatable(all_data %>% 
+                group_by(year_cde, month_nme, overall_category) %>%
+                summarize(cost_ttl = sum(monthly_cost)) %>%
+                ungroup() %>%
+                group_by(year_cde, overall_category) %>%
+                summarize(cost_median = median(cost_ttl)) %>%
+                pivot_wider(names_from="year_cde", values_from = "cost_median"), 
+              caption = "Monthly Median cost of overall_category per year:"
+    ), 
+    server = TRUE
+    
+  )
+  
+  
+  
+  output$item_cnt_per_year <- DT::renderDataTable(
+    
+    datatable(all_data %>%
+                group_by(year_cde, item_description) %>%
+                summarize(item_median = round(mean(monthly_cost),2)) %>%
+                pivot_wider(names_from="year_cde", values_from = "item_median"), 
+              caption = "Median cost of item per year:"
+    ), 
+    server = TRUE
+    
   )
 
-
+  
+  
   
     
 }
